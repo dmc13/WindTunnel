@@ -1,11 +1,12 @@
 from dolfin import *
+import os
 from helpers import FrozenClass
 from problem import Problem
 from function_spaces import FunctionSpaces
 
 class SolverParameters(FrozenClass):
     
-    pass
+    output_dir = os.curdir
 
 
 class Solver(object):
@@ -68,8 +69,42 @@ class Solver(object):
 	L3 = inner(u1, v)*dx - k * inner(grad(p1), v)*dx
 	A3 = assemble(a3)
 
+        # Iterate over time-steps, start at dt
+        t = self.problem.parameters.dt
+        while t < self.problem.parameters.finish_time:
+            print 'Starting timestep at time = ', t
 
-	     
+            # Update the pressure BC TODO assumes pressure driven
+            self.problem.parameters.BC.p_in.t = t
+            self.problem.parameters.BC.update()
+
+            # Tentative velocity step
+            print 'Step 1: Computing tentative velocity'
+            b1 = assemble(L1)
+            [bc.apply(A1, b1) for bc in bcu] # TODO fix this
+            solve(A1, u1.vector(), b1, "gmres", "default")
+            end()
+
+            # Pressure update
+            print 'Step 2: Updating pressure'
+            b2 = assemble(L2)
+            [bc.apply(A2, b2) for bc in bcp] # TODO fix this
+            solve(A2, p1.vector(), b2, "gmres", prec)
+            end()
+
+	    # Velocity update
+            print 'Step 3: Updating velocity'
+            b3 = assemble(L3)
+            [bc.apply(A3, b3) for bc in bcu]
+            solve(A3, u1.vector(), b3, "gmres", "default")
+            end()
+
+            # Timestep update
+            print 'Step 4: Dump and update timestep'
+            writer = StateWriter(solver=self)
+            writer.write(u1, p1)
+            u0.assign(u1)
+            t += self.problem.parameters.dt
 
 
 
