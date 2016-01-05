@@ -19,9 +19,14 @@ class Problem(object):
 	if not isinstance(parameters, ProblemParameters):
 	    raise TypeError, "Problem requires parameters of \
 			     type ProblemParameters"
+        else:
+            self.parameters = parameters
+        
+        # Generate the boundary conditions
+        self.parameters.bcs.generate_bcs()
     
     @staticmethod
     def default_parameters():
-	return ProblemParameters
+	return ProblemParameters()
 
 

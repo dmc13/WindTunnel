@@ -1,6 +1,6 @@
 from dolfin import *
 import os
-from helpers import FrozenClass
+from helpers import FrozenClass, StateWriter
 from problem import Problem
 from function_spaces import FunctionSpaces
 
@@ -9,8 +9,10 @@ class SolverParameters(FrozenClass):
     # Some fenics housekeeping:
     # - keep the std_out tidy when in parallel
     parameters["std_out_all_processes"] = False
+    # - use amg preconditioner if available
+    prec = "amg" if has_krylov_solver_preconditioner("amg") else "default"
 
-    output_dir = os.curdir
+    output_dir = os.curdir 
 
 
 class Solver(object):
@@ -39,15 +41,14 @@ class Solver(object):
     
     def solve(self):
 
-        # Set up the velocity functions and spaces
-        function_space = FunctionSpaces()
-        V = function_space.P2
+        # Fetch the function spaces
+        V, Q = FunctionSpaces.P2P1(self.problem.parameters.domain.mesh)
+        # Set up the velocity functions 
         u = TrialFunction(V)
         v = TestFunction(V)
         u0 = Function(V)
         u1 = Function(V) 
-	# Set up the pressure functions and spaces
-        Q = function_space.P1
+	# Set up the pressure functions
         p = TrialFunction(Q)
         q = TestFunction(Q)
         p1 = Function(Q)
@@ -77,12 +78,12 @@ class Solver(object):
 	A3 = assemble(a3)
 
         # Iterate over timesteps, start at dt
-        t = self.problem.parameters.dt
-        while t < self.problem.parameters.finish_time:
-            print 'Starting timestep at time = ', t
+        self.t = self.problem.parameters.dt
+        while self.t < self.problem.parameters.finish_time:
+            print 'Starting timestep at time = ', self.t
 
             # Update the boundary conditions for the current timestep
-            self.bs.update_time(t=t)
+            self.bcs.update_time(t=self.t)
 
             # Tentative velocity step
             print 'Step 1: Computing tentative velocity'
@@ -95,7 +96,7 @@ class Solver(object):
             print 'Step 2: Updating pressure'
             b2 = assemble(L2)
             [bc.apply(A2, b2) for bc in self.bcs.bc_p]
-            solve(A2, p1.vector(), b2, "gmres", prec)
+            solve(A2, p1.vector(), b2, "gmres", self.parameters.prec)
             end()
 
 	    # Velocity update
@@ -110,7 +111,12 @@ class Solver(object):
             writer = StateWriter(solver=self)
             writer.write(u1, p1)
             u0.assign(u1)
-            t += self.problem.parameters.dt
+            self.t += self.problem.parameters.dt
+
+            plot(p1, title="Pressure", rescale=True)
+            plot(u1, title="Velocity", rescale=True)
+
+interactive()
 
 
 

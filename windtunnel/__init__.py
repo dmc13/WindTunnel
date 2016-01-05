@@ -16,6 +16,7 @@ from helpers import *
 from problem import *
 from solver import *
 from boundary_conditions import *
+from domain import *
 
 import numpy as np
 np.random.seed(21)

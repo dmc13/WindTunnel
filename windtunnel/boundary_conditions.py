@@ -1,51 +1,42 @@
 from dolfin import *
 from function_spaces import FunctionSpaces
 
-class BoundaryConditionSet(list):
-    # Taken from OTF
-    def add_bc(self, function_name, 
-               expression=None, facet_id=None, bctype="strong_dirichlet"):
-        """ Valid choices for bctype: "weak_dirichlet", "strong_dirichlet",
-            "flather", "free_slip"
-        """
-        if expression is None and bctype!="free_slip":
-            raise TypeError("Boundary condition of type %s requires "
-                            "expression argument." % bctype)
-        if expression is not None and bctype=="free_slip":
-            raise TypeError('Boundary condition of type "free_slip" '
-                            'does not allow expression argument.')
-        if facet_id is None:
-            raise TypeError('facet_id argument to add_bc() method is '
-                            'not optional')
-
-	self.append((function_name, expression, facet_id, bctype))
-
 class BoundaryConditions(object):
 
-    def __init__(self):
-        function_spaces = FunctionSpaces()
-        self.V = function_spaces.P2
-        self.bc_u = []
-        self.Q = function_spaces.P1
-        self.bc_p = []
+    def __init__(self, function_spaces, domain):
+        self.V, self.Q = function_spaces
+        self.bc_u_list = []
+        self.bc_p_list = []
+        self.domain = domain
 
-    def add_bc_u(self, expression=None, facet_id=None, bctype="strong_dirichlet"):
+    def add_bc_u(self, expression=None, facet_id=None, time_dependent=False):
         # Velocity bcs
-        bc = DirichletBC(self.V, expression, facet_id, bctype)
-        self.bc_u.append(bc)
+        #bc = DirichletBC(self.V, expression, facet_id)
+        self.bc_u_list.append([expression, facet_id, time_dependent])
 
-    def add_bc_p(self, expression=None, facet_id=None, bctype="strong_dirichlet"):
+    def add_bc_p(self, expression=None, facet_id=None, time_dependent=False):
         # Pressure bcs
-        bc = DirichletBC(self.Q, expression, facet_id, bctype)
-        self.bc_p.append(bc)
+        #bc = DirichletBC(self.Q, expression, facet_id)
+        self.bc_p_list.append([expression, facet_id, time_dependent])
+
+    def generate_bcs(self):
+        self.bc_u, self.bc_p = [], []
+        for i in range(len(self.bc_u_list)):
+            self.bc_u.append(DirichletBC(self.V, self.bc_u_list[i][0],
+                                         self.domain.facet_ids, self.bc_u_list[i][1]))
+        for i in range(len(self.bc_p_list)):
+            self.bc_p.append(DirichletBC(self.Q, self.bc_p_list[i][0],
+                                         self.domain.facet_ids, self.bc_p_list[i][1]))
 
     def update_time(self, t):
         # Update the time in the expression for temporal BCs
-        # TODO not sure we can access the expressions like this...
-        for bc in self.bc_u:
-            if hasattr(bc[1], "t"):
-                bc[1].t = t
-        for bc in self.bc_p:
-            if hasattr(bc[1], "t"):
-                bc[1].t = t
+        # TODO this seems like a poor way of doing this...
+        for bc in self.bc_u_list:
+            if bc[2]:
+                bc[0].t = t
+        for bc in self.bc_p_list:
+            if bc[2]:
+                bc[0].t = t
+        self.generate_bcs
+#        from IPython import embed; embed()
 

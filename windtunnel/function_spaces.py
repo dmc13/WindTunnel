@@ -2,20 +2,46 @@ from dolfin import *
 
 class FunctionSpaces(object):
 
-    def __init__(self):
-        # Creates the function spaces
-        self.P0 = FunctionSpace(self.mesh, 'DG', 0, vfamily='DG', vdegree=0,
-                                name='P0')
-        self.P1 = FunctionSpace(self.mesh, 'CG', 1, vfamily='CG', vdegree=1,
-                                name='P1')
-        self.P1v = VectorFunctionSpace(self.mesh, 'CG', 1, vfamily='CG', vdegree=1,
-                                       name='P1v')
-        self.P1DG = FunctionSpace(self.mesh, 'DG', 1, vfamily='DG', vdegree=1,
-                                  name='P1DG')
-        self.P1DGv = VectorFunctionSpace(self.mesh, 'DG', 1, vfamily='DG', vdegree=1,
-                                         name='P1DGv')
-        self.P2 = VectorFunctionSpace(mesh, "CG", 2, vfamily='CG', vdegree=2,
-                                      name='P2')
+    @staticmethod
+    def P0(mesh):
+        return FunctionSpace(mesh, 'DG', 0)
+               #, vfamily='DG', vdegree=0, name='P0')
+
+    @staticmethod
+    def P1(mesh):
+        return FunctionSpace(mesh, 'CG', 1)
+               #, vfamily='CG', vdegree=1, name='P1')
+
+    @staticmethod
+    def P1v(mesh):
+        return VectorFunctionSpace(mesh, 'CG', 1)
+               #, vfamily='CG', vdegree=1, name='P1v')
+
+    @staticmethod
+    def P1DG(mesh):
+        return FunctionSpace(mesh, 'DG', 1)
+               #, vfamily='DG', vdegree=1, name='P1DG')
+
+    @staticmethod
+    def P1DGv(mesh):
+        return VectorFunctionSpace(mesh, 'DG', 1)
+               #, vfamily='DG', vdegree=1, name='P1DGv')
+
+    @staticmethod
+    def P2(mesh):
+        return VectorFunctionSpace(mesh, "CG", 2)
+               #, vfamily='CG', vdegree=2, name='P2')
+
+    @staticmethod
+    def P2P1(mesh):
+        """ Taylor-Hood Element pair """
+        return [FunctionSpaces.P2(mesh), FunctionSpaces.P1(mesh)]
 
 
-        self.append((function_name, expression, facet_id, bctype))
+if __name__ == '__main__':
+
+    mesh = UnitSquareMesh(10, 10)
+    V, Q = FunctionSpaces.P2P1(mesh)
+    print V
+    print Q
+    
