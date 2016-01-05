@@ -6,6 +6,10 @@ from function_spaces import FunctionSpaces
 
 class SolverParameters(FrozenClass):
     
+    # Some fenics housekeeping:
+    # - keep the std_out tidy when in parallel
+    parameters["std_out_all_processes"] = False
+
     output_dir = os.curdir
 
 
@@ -33,7 +37,7 @@ class Solver(object):
         return SolverParameters()
 
     
-    def solve(self, parameters, problem):
+    def solve(self):
 
         # Set up the velocity functions and spaces
         function_space = FunctionSpaces()

@@ -1,9 +1,34 @@
-from daves_navier_stokes import *
+from windtunnel import *
 
-# keep the std_out tidy when in parallel
-parameters["std_out_all_processes"] = False
+# Grab default parameter set
+problem_parameters = Problem.default_parameters()
 
-# mesh
+# Set up the domain
 mesh = Mesh("lshape.xml.gz")
+problem_parameters.domain = mesh
 
+# Set boundary conditions, vel; no-slip on boundarys, press; inflow then outflow
+bcs = BoundaryConditions() #TODO do we need function spaces here?
+bcs.add_bc_u((0, 0), facet_id=3)
+p_in = Expression("sin(3.0*t)", t=0.0)
+bcs.add_bc_p(p_in, facet_id=1)
+bcs.add_bc_p(0, facet_id=2)
+problem_parameters.bcs = bcs
+
+# Set up other parameters
+problem_parameters.dt = 0.01
+problem_parameters.finish_time = 3
+problem_parameters.viscosity = 0.01
+
+# Set up problem
+problem = Problem(problem_parameters)
+
+# Grab default solver parameter set
+solver_parameters = Solver.default_parameters
+
+# Set up solver
+solver = Solver(default_parameters, problem)
+
+# Solve
+solver.solve()
 
