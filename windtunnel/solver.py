@@ -12,7 +12,9 @@ class SolverParameters(FrozenClass):
     # - use amg preconditioner if available
     prec = "amg" if has_krylov_solver_preconditioner("amg") else "default"
 
+    dump_period = 1
     output_dir = os.curdir 
+    live_plotting = False
 
 
 class Solver(object):
@@ -42,7 +44,7 @@ class Solver(object):
     def solve(self):
 
         # Fetch the function spaces
-        V, Q = FunctionSpaces.P2P1(self.problem.parameters.domain.mesh)
+        V, Q = self.problem.parameters.discretisation
         # Set up the velocity functions 
         u = TrialFunction(V)
         v = TestFunction(V)
@@ -108,15 +110,18 @@ class Solver(object):
 
             # Timestep update
             print 'Step 4: Dump and update timestep'
-            writer = StateWriter(solver=self)
-            writer.write(u1, p1)
+            if (self.t/self.problem.parameters.dt)%self.parameters.dump_period == 0:
+                writer = StateWriter(solver=self)
+                writer.write(u1, p1)
             u0.assign(u1)
             self.t += self.problem.parameters.dt
+            
+            if self.parameters.live_plotting:
+                plot(p1, title="Pressure", rescale=True)
+                plot(u1, title="Velocity", rescale=True)
 
-            plot(p1, title="Pressure", rescale=True)
-            plot(u1, title="Velocity", rescale=True)
-
-interactive()
+        if self.parameters.live_plotting:
+            interactive()
 
 
 

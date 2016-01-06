@@ -3,11 +3,11 @@ from function_spaces import FunctionSpaces
 
 class BoundaryConditions(object):
 
-    def __init__(self, function_spaces, domain):
-        self.V, self.Q = function_spaces
+    def __init__(self):
         self.bc_u_list = []
         self.bc_p_list = []
-        self.domain = domain
+        self.domain = None 
+        self.function_spaces = None
 
     def add_bc_u(self, expression=None, facet_id=None, time_dependent=False):
         # Velocity bcs
@@ -21,11 +21,12 @@ class BoundaryConditions(object):
 
     def generate_bcs(self):
         self.bc_u, self.bc_p = [], []
+        V, Q = self.function_spaces
         for i in range(len(self.bc_u_list)):
-            self.bc_u.append(DirichletBC(self.V, self.bc_u_list[i][0],
+            self.bc_u.append(DirichletBC(V, self.bc_u_list[i][0],
                                          self.domain.facet_ids, self.bc_u_list[i][1]))
         for i in range(len(self.bc_p_list)):
-            self.bc_p.append(DirichletBC(self.Q, self.bc_p_list[i][0],
+            self.bc_p.append(DirichletBC(Q, self.bc_p_list[i][0],
                                          self.domain.facet_ids, self.bc_p_list[i][1]))
 
     def update_time(self, t):

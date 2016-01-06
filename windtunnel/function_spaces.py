@@ -37,6 +37,14 @@ class FunctionSpaces(object):
         """ Taylor-Hood Element pair """
         return [FunctionSpaces.P2(mesh), FunctionSpaces.P1(mesh)]
 
+    @staticmethod
+    def parse_function_spaces(string, mesh):
+        if string == 'P2P1':
+            return FunctionSpaces.P2P1(mesh)
+        else:
+            raise Exception('Valid discretisation is required '
+                            '- why not try "P2P1"?')
+
 
 if __name__ == '__main__':
 

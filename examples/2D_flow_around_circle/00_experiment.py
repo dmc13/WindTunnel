@@ -8,10 +8,10 @@ domain = FileDomain('mesh/mesh.xml')
 problem_parameters.domain = domain
 
 # Choose our discretisation
-function_spaces = FunctionSpaces.P2P1(domain.mesh)
+problem_parameters.function_spaces = 'P2P1'  # FunctionSpaces.P2P1(domain.mesh)
 
 # Set boundary conditions, vel; no-slip on boundaries, press; inflow then outflow
-bcs = BoundaryConditions(function_spaces, domain)
+bcs = BoundaryConditions()
 bcs.add_bc_u((0, 0), facet_id=3)
 p_in = Expression("6*sin(6.0*t)", t=0.0)
 bcs.add_bc_p(p_in, facet_id=1, time_dependent=True)
